@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Google Tag Manager -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1CQ4D3VQ3L"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-1CQ4D3VQ3L');
+    </script>
+    <!-- End Google Tag Manager -->
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solitary Solitaire</title>
+    <meta name="description" content="Play Solitary Solitaire, a free, modern neuromorphic card game by Chris Pirillo. Enjoy this mobile-optimized classic Klondike solitaire experience directly in your browser.">
+    <meta name="keywords" content="solitaire, solitary solitaire, klondike, card game, free game, online game, neuromorphic design, Chris Pirillo, arcade, browser game">
+    <meta name="author" content="Chris Pirillo">
+    <meta name="robots" content="index, follow">
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://pirillo.com/arcade/solitary-solitaire.html">
+
+    <!-- Open Graph Metadata -->
+    <meta property="og:title" content="Solitary Solitaire">
+    <meta property="og:description" content="Play Solitary Solitaire, a sleek, neuromorphic design solitaire game. Free online classic card game optimized for mobile and desktop.">
+    <meta property="og:url" content="https://pirillo.com/arcade/solitary-solitaire.html">
+    <meta property="og:image" content="https://pirillo.com/arcade/images/solitary-solitaire.png">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Pirillo Arcade">
+
+    <!-- Twitter Card Metadata -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@ChrisPirillo">
+    <meta name="twitter:creator" content="@ChrisPirillo">
+    <meta name="twitter:title" content="Solitary Solitaire">
+    <meta name="twitter:description" content="Experience the classic card game with a modern twist. Play Solitary Solitaire now.">
+    <meta name="twitter:image" content="https://pirillo.com/arcade/images/solitary-solitaire.png">
+
+    <!-- Resource Hints for Performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://unpkg.com">
+
+    <!-- Tailwind CSS (Kept synchronous as requested to prevent FOUC/breakage) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons (Deferred for performance) -->
+    <script src="https://unpkg.com/lucide@latest" defer></script>
+
+    <!-- Google Font (Optimized with swap) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Game",
+      "name": "Solitary Solitaire",
+      "author": {
+        "@type": "Person",
+        "name": "Chris Pirillo",
+        "url": "https://chris.pirillo.com"
+      },
+      "description": "A modern, neuromorphic implementation of the classic Klondike Solitaire card game.",
+      "image": "https://pirillo.com/arcade/images/solitary-solitaire.png",
+      "url": "https://pirillo.com/arcade/solitary-solitaire.html",
+      "genre": "Card Game",
+      "audience": {
+        "@type": "PeopleAudience",
+        "suggestedMinAge": "5"
+      },
+      "operatingSystem": "Any"
+    }
+    </script>
+
+    <style>
+        :root {
+            /* Dynamic variables for responsive sizing */
+            --card-width: 80px;
+            --card-height: 112px;
+            --card-stack-offset: 28px;
+            --card-border-radius: 12px;
+            --header-btn-size: 48px;
+            --game-gap: 8px;
+        }
+
+        /* Base styling for the neuromorphic look */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #e0e0e0;
+            -webkit-tap-highlight-color: transparent;
+            overflow: hidden; /* Prevent all scroll */
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* Container to scale the game */
+        #game-wrapper {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center; /* Center horizontally */
+            align-items: flex-start; /* Align to top (fix for floating board) */
+            /* Padding is now set dynamically by JavaScript */
+        }
+        
+        #game-board {
+            width: 100%;
+            max-width: 1200px; /* This caps the grid width */
+            margin: 0 auto;
+        }
+        
+        /* Convex (raised) element style */
+        .neumorphic-convex {
+            background: #e0e0e0;
+            border-radius: var(--card-border-radius);
+            box-shadow: 
+                /* Dynamic shadows based on size */
+                calc(var(--card-width, 80px) * 0.075) calc(var(--card-width, 80px) * 0.075) calc(var(--card-width, 80px) * 0.15) #bebebe,
+                calc(var(--card-width, 80px) * -0.075) calc(var(--card-width, 80px) * -0.075) calc(var(--card-width, 80px) * 0.15) #ffffff;
+            transition: all 0.15s ease-in-out;
+        }
+
+        /* Concave (inset) element style */
+        .neumorphic-concave {
+            background: #e0e0e0;
+            border-radius: var(--card-border-radius);
+            box-shadow: 
+                inset calc(var(--card-width, 80px) * 0.075) calc(var(--card-width, 80px) * 0.075) calc(var(--card-width, 80px) * 0.15) #bebebe,
+                inset calc(var(--card-width, 80px) * -0.075) calc(var(--card-width, 80px) * -0.075) calc(var(--card-width, 80px) * 0.15) #ffffff;
+        }
+
+        /* Button press effect */
+        .neumorphic-button:active {
+            background: #e0e0e0;
+            box-shadow: 
+                inset calc(var(--card-width, 80px) * 0.075) calc(var(--card-width, 80px) * 0.075) calc(var(--card-width, 80px) * 0.15) #bebebe,
+                inset calc(var(--card-width, 80px) * -0.075) calc(var(--card-width, 80px) * -0.075) calc(var(--card-width, 80px) * 0.15) #ffffff;
+            transform: scale(0.98);
+        }
+
+        /* Card dimensions */
+        .card {
+            width: var(--card-width);
+            height: var(--card-height);
+            border-radius: var(--card-border-radius);
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            position: relative; /* Base for internal absolute elements */
+            flex-shrink: 0; /* Prevent shrinking in flex containers */
+        }
+
+        /* Empty pile placeholder */
+        .card-placeholder {
+            width: var(--card-width);
+            height: var(--card-height);
+            border-radius: var(--card-border-radius);
+        }
+        
+        /* 3D Stock Pile */
+        .stock-deck {
+            position: relative;
+        }
+        /* Create the 3D stack effect */
+        .stock-deck::before, .stock-deck::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: var(--card-border-radius);
+            background: #e0e0e0;
+            box-shadow: 
+                calc(var(--card-width, 80px) * 0.075) calc(var(--card-width, 80px) * 0.075) calc(var(--card-width, 80px) * 0.15) #bebebe,
+                calc(var(--card-width, 80px) * -0.075) calc(var(--card-width, 80px) * -0.075) calc(var(--card-width, 80px) * 0.15) #ffffff;
+            left: 0;
+            top: 0;
+            z-index: -1;
+        }
+        .stock-deck::before {
+            transform: translate(calc(var(--card-width) * 0.025), calc(var(--card-width) * 0.025)); /* 1st layer */
+        }
+        .stock-deck::after {
+            transform: translate(calc(var(--card-width) * 0.05), calc(var(--card-width) * 0.05)); /* 2nd layer */
+        }
+
+        /* Make cards in tableau piles overlap */
+        .tableau-pile {
+            position: relative;
+            min-height: var(--card-height); /* Min height is 1 card */
+        }
+
+        .tableau-pile .card,
+        .waste-pile .card {
+            position: absolute;
+            left: 0;
+            top: 0;
+            transition: top 0.2s ease, left 0.2s ease;
+        }
+
+        /* Grid for card piles */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: var(--game-gap);
+        }
+
+        /* Dragging styles */
+        .is-dragging {
+            opacity: 0.0; /* Hide, don't use 0.5 */
+            cursor: grabbing;
+        }
+
+        /* Custom drag image */
+        .custom-drag-image {
+            position: absolute;
+            left: -9999px; /* Hide off-screen */
+            z-index: 1000;
+            pointer-events: none;
+        }
+        .custom-drag-image .card {
+            /* Stacked look */
+            margin-bottom: calc(var(--card-height) * -0.75); 
+        }
+        .custom-drag-image .card:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Card Face Design */
+        .card-rank-top {
+            position: absolute;
+            top: 5%;
+            left: 8%;
+            font-size: calc(var(--card-width) * 0.22); /* Responsive font */
+            font-weight: 700;
+            line-height: 1;
+        }
+        .card-rank-bottom {
+            position: absolute;
+            bottom: 5%;
+            right: 8%;
+            font-size: calc(var(--card-width) * 0.22); /* Responsive font */
+            font-weight: 700;
+            line-height: 1;
+            transform: rotate(180deg);
+        }
+        .card-suit-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: calc(var(--card-width) * 0.5); /* Responsive font */
+            line-height: 1;
+        }
+        
+        /* Header button scaling */
+        .header-btn {
+            width: var(--header-btn-size);
+            height: var(--header-btn-size);
+            border-radius: var(--card-border-radius); 
+            /* Flex properties to center the icon */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0; /* Prevent buttons from shrinking */
+        }
+        /* Scale the icon (SVG) inside the button */
+        .header-btn i,
+        .header-btn svg {
+            width: 60%;
+            height: 60%;
+            color: #4a4a4a; /* neutral-600 */
+        }
+
+    </style>
+</head>
+<body class="bg-[#e0e0e0] text-neutral-700 min-h-screen overflow-hidden">
+
+    <!-- BOTTOM-LEFT BUTTONS -->
+    <div id="button-container" class="fixed z-10 flex gap-2">
+        <button id="hamburger-btn" class="neumorphic-convex neumorphic-button header-btn" aria-label="Menu">
+            <i data-lucide="menu"></i>
+        </button>
+        <button id="undo-btn" class="neumorphic-convex neumorphic-button header-btn" aria-label="Undo Move">
+            <i data-lucide="undo"></i>
+        </button>
+    </div>
+
+    <div id="game-wrapper">
+        
+        <main id="game-board">
+            
+            <!-- Top Row: Stock, Waste, Foundations -->
+            <div class="card-grid" style="margin-bottom: var(--game-gap);"> 
+                <!-- Column 1: Stock -->
+                <div id="stock-pile" class="card-placeholder neumorphic-concave" data-pile="stock">
+                    <!-- Stock cards go here -->
+                </div>
+                
+                <!-- Column 2: Waste -->
+                <div id="waste-pile" class="card-placeholder relative" data-pile="waste">
+                    <!-- Waste cards go here -->
+                </div>
+
+                <!-- Column 3: Spacer -->
+                <div class="hidden sm:block"></div> 
+
+                <!-- Columns 4-7: Foundations -->
+                <div id="foundation-0" class="card-placeholder neumorphic-concave" data-pile="foundation" data-index="0"></div>
+                <div id="foundation-1" class="card-placeholder neumorphic-concave" data-pile="foundation" data-index="1"></div>
+                <div id="foundation-2" class="card-placeholder neumorphic-concave" data-pile="foundation" data-index="2"></div>
+                <div id="foundation-3" class="card-placeholder neumorphic-concave" data-pile="foundation" data-index="3"></div>
+            </div>
+
+            <!-- Bottom Row: Tableaus -->
+            <div class="card-grid">
+                <div id="tableau-0" class="tableau-pile" data-pile="tableau" data-index="0"></div>
+                <div id="tableau-1" class="tableau-pile" data-pile="tableau" data-index="1"></div>
+                <div id="tableau-2" class="tableau-pile" data-pile="tableau" data-index="2"></div>
+                <div id="tableau-3" class="tableau-pile" data-pile="tableau" data-index="3"></div>
+                <div id="tableau-4" class="tableau-pile" data-pile="tableau" data-index="4"></div>
+                <div id="tableau-5" class="tableau-pile" data-pile="tableau" data-index="5"></div>
+                <div id="tableau-6" class="tableau-pile" data-pile="tableau" data-index="6"></div>
+            </div>
+
+        </main>
+    </div> <!-- End #game-wrapper -->
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="fixed inset-0 bg-[#e0e0e0] bg-opacity-80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div class="neumorphic-convex p-6 rounded-2xl w-full max-w-sm relative" style="border-radius: var(--card-border-radius);">
+            
+            <button id="settings-close-btn" class="neumorphic-convex neumorphic-button p-2 rounded-full absolute top-4 right-4" style="width: calc(var(--header-btn-size) * 0.8); height: calc(var(--header-btn-size) * 0.8);" aria-label="Close Settings">
+                <i data-lucide="x" class="w-full h-full text-neutral-600"></i>
+            </button>
+
+            <h2 class="text-2xl font-bold text-neutral-700 mb-6 text-center">Settings</h2>
+
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-neutral-600 mb-2">Draw Count</label>
+                <div class="flex rounded-lg neumorphic-concave p-1">
+                    <button id="draw-1-btn" class="flex-1 p-2 rounded-lg text-neutral-700 font-semibold" style="border-radius: var(--card-border-radius);">
+                        Draw 1
+                    </button>
+                    <button id="draw-3-btn" class="flex-1 p-2 rounded-lg text-neutral-700 font-semibold" style="border-radius: var(--card-border-radius);">
+                        Draw 3
+                    </button>
+                </div>
+            </div>
+
+            <button id="modal-new-game-btn" class="w-full neumorphic-convex neumorphic-button p-3 rounded-lg text-neutral-700 font-semibold text-lg" style="border-radius: var(--card-border-radius);">
+                New Game
+            </button>
+        </div>
+    </div>
+
+    <!-- Win Modal -->
+    <div id="win-modal" class="fixed inset-0 bg-[#e0e0e0] bg-opacity-80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div class="neumorphic-convex p-8 rounded-2xl w-full max-w-sm text-center" style="border-radius: var(--card-border-radius);">
+            <div class="text-cyan-600 mb-4">
+                <i data-lucide="party-popper" class="w-16 h-16 mx-auto"></i>
+            </div>
+            <h2 class="text-3xl font-bold text-neutral-700 mb-4">You Win!</h2>
+            <p class="text-neutral-600 mb-6">Congratulations on clearing the board!</p>
+            <button id="win-new-game-btn" class="w-full neumorphic-convex neumorphic-button p-3 rounded-lg text-neutral-700 font-semibold text-lg" style="border-radius: var(--card-border-radius);">
+                Play Again
+            </button>
+        </div>
+    </div>
+
+    <!-- Custom Drag Image Container -->
+    <div id="custom-drag-image" class="custom-drag-image"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- CONSTANTS ---
+            const SUITS = ['H', 'D', 'C', 'S'];
+            const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+            const SUIT_ICONS = { H: '♥', D: '♦', C: '♣', S: '♠' };
+            const SUIT_COLORS = { H: 'text-red-600', D: 'text-red-600', C: 'text-neutral-800', S: 'text-neutral-800' };
+            const MAX_TABLEAU_STACK_OFFSETS = 18; // 19 cards total - 1 base card
+
+            // --- RESPONSIVE SIZING VARS ---
+            let CARD_STACK_OFFSET = 28; // Vertical stack
+            let WASTE_STACK_OFFSET = 32; // Horizontal stack
+            let CARD_HEIGHT = 112;
+
+            // --- GAME STATE ---
+            let state = {
+                deck: [],
+                stock: [],
+                waste: [],
+                wasteVisibleCount: 0, // For Draw 3 logic
+                foundations: [[], [], [], []],
+                tableaus: [[], [], [], [], [], [], []],
+                drawCount: 3,
+                dragging: {
+                    cards: [],
+                    pile: null,
+                    index: null,
+                    cardIndex: null
+                },
+                gameInProgress: false,
+                history: [], // For undo
+            };
+
+            // --- DOM ELEMENTS ---
+            const gameWrapper = document.getElementById('game-wrapper');
+            const gameBoard = document.getElementById('game-board');
+            const stockPileEl = document.getElementById('stock-pile');
+            const wastePileEl = document.getElementById('waste-pile');
+            const foundationEls = Array.from(document.querySelectorAll('[id^="foundation-"]'));
+            const tableauEls = Array.from(document.querySelectorAll('[id^="tableau-"]'));
+            const cardGrids = document.querySelectorAll('.card-grid');
+            const buttonContainer = document.getElementById('button-container');
+            
+            // Modals & Buttons
+            const settingsModal = document.getElementById('settings-modal');
+            const hamburgerBtn = document.getElementById('hamburger-btn');
+            const settingsCloseBtn = document.getElementById('settings-close-btn');
+            const draw1Btn = document.getElementById('draw-1-btn');
+            const draw3Btn = document.getElementById('draw-3-btn');
+            const undoBtn = document.getElementById('undo-btn');
+            const modalNewGameBtn = document.getElementById('modal-new-game-btn');
+            const winModal = document.getElementById('win-modal');
+            const winNewGameBtn = document.getElementById('win-new-game-btn');
+            const customDragImageEl = document.getElementById('custom-drag-image');
+
+            // --- CORE FUNCTIONS ---
+
+            /**
+             * Saves the current game state for undo
+             */
+            function saveState() {
+                // Deep copy the state to prevent mutation
+                const snapShot = {
+                    stock: JSON.parse(JSON.stringify(state.stock)),
+                    waste: JSON.parse(JSON.stringify(state.waste)),
+                    wasteVisibleCount: state.wasteVisibleCount,
+                    foundations: JSON.parse(JSON.stringify(state.foundations)),
+                    tableaus: JSON.parse(JSON.stringify(state.tableaus)),
+                };
+                state.history.push(snapShot);
+            }
+
+            /**
+             * Loads the previous game state
+             */
+            function undoMove() {
+                if (state.history.length === 0) return;
+
+                const lastState = state.history.pop();
+                state.stock = lastState.stock;
+                state.waste = lastState.waste;
+                state.wasteVisibleCount = lastState.wasteVisibleCount;
+                state.foundations = lastState.foundations;
+                state.tableaus = lastState.tableaus;
+
+                // No resize needed, just render
+                renderGame();
+            }
+
+            /**
+             * Updates card sizes and offsets based on viewport
+             */
+            function updateSizing() {
+                const root = document.documentElement;
+
+                // --- 1. Get Viewport-level available space ---
+                const viewportWidth = document.documentElement.clientWidth;
+                const viewportHeight = document.documentElement.clientHeight;
+                
+                // FIX: We must clamp the width calculation to the max-width of the board (1200px)
+                // Otherwise, on large screens, the cards are calculated based on viewportWidth (e.g. 2500px)
+                // but the CSS grid is constrained to 1200px, causing massive overlap.
+                const maxBoardWidth = 1200; 
+                // Reserve horizontal padding to prevent edge-to-edge touching (16px * 2)
+                const horizontalPadding = 32; 
+                
+                // The "effective" width is the smaller of the viewport or the max container width, minus padding
+                const effectiveWidth = Math.min(viewportWidth, maxBoardWidth) - horizontalPadding;
+
+                // --- 2. Define Sizing Ratios ---
+                const GAP_RATIO = 0.2; // Gap is 20% of card WIDTH
+                const ASPECT_RATIO = 1.4; // H = W * 1.4
+                const STACK_OFFSET_RATIO = 0.25; // Stack offset is 25% of card HEIGHT
+
+                // --- 3. Calculate ideal sizes based on width AND height ---
+                
+                // --- Width Calculation ---
+                // BoardWidth = 7 * W + 6 * (W * GAP_RATIO) = W * (7 + 6 * GAP_RATIO)
+                // We use effectiveWidth to ensure cards fit within the container constraints
+                const cardWidth_byWidth = effectiveWidth / (7 + 6 * GAP_RATIO);
+
+                // --- Height Calculation ---
+                // H = W * ASPECT_RATIO
+                // SO = H * STACK_OFFSET_RATIO = (W * ASPECT_RATIO) * STACK_OFFSET_RATIO
+                // G = W * GAP_RATIO 
+                // BoardHeight = H (top) + G (as H) + (H (base) + MAX_TABLEAU_STACK_OFFSETS * SO)
+                // Let's use a gap based on HEIGHT for vertical rhythm
+                const VERTICAL_GAP_RATIO = 0.1; // Gap is 10% of card HEIGHT
+                // H = W * ASPECT_RATIO
+                // SO = H * STACK_OFFSET_RATIO
+                // G = H * VERTICAL_GAP_RATIO
+                // BoardHeight = H (top) + G + (H (base) + MAX_TABLEAU_STACK_OFFSETS * SO)
+                // BoardHeight = H + (H * VGR) + (H + MAX_OFFSETS * (H * SOR))
+                // BoardHeight = H * (1 + VGR + 1 + MAX_OFFSETS * SOR)
+                // e.g., H * (1 + 0.1 + 1 + 18 * 0.25) = H * (2.1 + 4.5) = H * 6.6
+                const cardHeight_byHeight = viewportHeight / (1 + VERTICAL_GAP_RATIO + 1 + (MAX_TABLEAU_STACK_OFFSETS * STACK_OFFSET_RATIO));
+                const cardWidth_byHeight = cardHeight_byHeight / ASPECT_RATIO; // Maintain aspect ratio
+
+                // --- 4. Use the SMALLEST calculation to fit ---
+                let finalCardWidth;
+                if (cardWidth_byWidth < cardWidth_byHeight) {
+                    finalCardWidth = cardWidth_byWidth;
+                } else {
+                    finalCardWidth = cardWidth_byHeight;
+                }
+                
+                const finalCardHeight = finalCardWidth * ASPECT_RATIO;
+                const finalCardStackOffset = finalCardHeight * STACK_OFFSET_RATIO;
+                const finalGap = finalCardWidth * GAP_RATIO; // Horizontal gap
+                const finalVerticalGap = finalCardHeight * VERTICAL_GAP_RATIO; // Vertical gap
+
+                // --- 5. Calculate final padding to center the board ---
+                const gameBoardWidth = (7 * finalCardWidth) + (6 * finalGap);
+                const gameBoardHeight = (1 * finalCardHeight) + (finalVerticalGap) + (finalCardHeight + (MAX_TABLEAU_STACK_OFFSETS - 1) * finalCardStackOffset);
+                
+                let finalHorizontalPadding = (viewportWidth - gameBoardWidth) / 2;
+                let finalVerticalPadding = (viewportHeight - gameBoardHeight) / 2;
+                
+                // Add a minimum padding
+                finalHorizontalPadding = Math.max(finalHorizontalPadding, 16);
+                finalVerticalPadding = Math.max(finalVerticalPadding, 16);
+                
+                // --- 6. Apply all calculated styles ---
+                
+                // Update global sizing variables
+                CARD_HEIGHT = finalCardHeight;
+                CARD_STACK_OFFSET = finalCardStackOffset;
+                WASTE_STACK_OFFSET = finalCardWidth * 0.40; // 40% of width
+                
+                // Update CSS variables used for dynamic styling
+                root.style.setProperty('--card-width', `${finalCardWidth}px`);
+                root.style.setProperty('--card-height', `${finalCardHeight}px`);
+                root.style.setProperty('--card-stack-offset', `${CARD_STACK_OFFSET}px`);
+                root.style.setProperty('--card-border-radius', `${finalCardWidth * 0.1}px`); // 10% of width
+
+                // Scale header buttons
+                const btnSize = finalCardWidth * 0.6;
+                root.style.setProperty('--header-btn-size', `${btnSize}px`);
+
+                // Set dynamic gaps and padding
+                root.style.setProperty('--game-gap', `${finalGap}px`);
+                
+                // Set padding on the wrapper to center the board
+                gameWrapper.style.padding = `${finalVerticalPadding}px ${finalHorizontalPadding}px`;
+                
+                // Position the fixed buttons in the padded area
+                buttonContainer.style.bottom = `${finalVerticalPadding}px`;
+                buttonContainer.style.left = `${finalHorizontalPadding}px`;
+
+                // Update game board margin for the top row
+                gameBoard.children[0].style.marginBottom = `${finalVerticalGap}px`;
+            }
+
+            /**
+             * Creates a standard 52-card deck
+             */
+            function createDeck() {
+                state.deck = [];
+                for (const suit of SUITS) {
+                    for (let i = 0; i < RANKS.length; i++) {
+                        state.deck.push({
+                            id: `${suit}${RANKS[i]}`,
+                            suit: suit,
+                            rank: RANKS[i],
+                            value: i + 1,
+                            color: (suit === 'H' || suit === 'D') ? 'red' : 'black',
+                            faceUp: false,
+                        });
+                    }
+                }
+            }
+
+            /**
+             * Shuffles the deck using Fisher-Yates algorithm
+             */
+            function shuffleDeck() {
+                let m = state.deck.length, t, i;
+                while (m) {
+                    i = Math.floor(Math.random() * m--);
+                    t = state.deck[m];
+                    state.deck[m] = state.deck[i];
+                    state.deck[i] = t;
+                }
+            }
+
+            /**
+             * Deals the cards to the tableau and stock
+             */
+            function dealCards() {
+                // Reset state
+                state.stock = [...state.deck];
+                state.waste = [];
+                state.wasteVisibleCount = 0;
+                state.foundations = [[], [], [], []];
+                state.tableaus = [[], [], [], [], [], [], []];
+                state.history = []; // Clear undo history
+
+                // Deal to tableaus
+                for (let i = 0; i < 7; i++) {
+                    for (let j = 0; j <= i; j++) {
+                        const card = state.stock.pop();
+                        if (j === i) {
+                            card.faceUp = true; // Flip last card
+                        }
+                        state.tableaus[i].push(card);
+                    }
+                }
+            }
+
+            /**
+             * Starts a new game
+             */
+            function newGame() {
+                createDeck();
+                shuffleDeck();
+                dealCards();
+                updateSizing(); // Calculate sizes
+                renderGame();   // Then render
+                winModal.classList.add('hidden');
+                settingsModal.classList.add('hidden');
+                state.gameInProgress = true;
+            }
+
+            // --- RENDER FUNCTIONS ---
+
+            /**
+             * Main render function to update the entire board
+             */
+            function renderGame() {
+                renderStock();
+                renderWaste();
+                renderFoundations();
+                renderTableaus();
+                // Note: lucide.createIcons() is called ONCE at the end of the script
+            }
+
+            /**
+             * Creates a DOM element for a card
+             */
+            function createCardElement(card) {
+                const cardEl = document.createElement('div');
+                cardEl.className = 'card neumorphic-convex'; // Base classes
+                cardEl.dataset.cardId = card.id;
+
+                if (card.faceUp) {
+                    cardEl.draggable = true;
+                    // Updated card face design
+                    cardEl.innerHTML = `
+                        <div class="card-rank-top ${SUIT_COLORS[card.suit]}">${card.rank}</div>
+                        <div class="card-suit-center ${SUIT_COLORS[card.suit]}">${SUIT_ICONS[card.suit]}</div>
+                        <div class="card-rank-bottom ${SUIT_COLORS[card.suit]}">${card.rank}</div>
+                    `;
+                } else {
+                    // Render a blank card back (no icon)
+                    cardEl.innerHTML = ``;
+                }
+                
+                // Add data attributes for event handling
+                const location = findCardLocation(card.id);
+                if (location) {
+                    cardEl.dataset.pile = location.pile;
+                    if (location.index !== undefined) {
+                        cardEl.dataset.index = location.index;
+                    }
+                    if (location.cardIndex !== undefined) {
+                        cardEl.dataset.cardIndex = location.cardIndex;
+                    }
+                }
+
+                return cardEl;
+            }
+
+            function renderStock() {
+                stockPileEl.innerHTML = '';
+                // Reset classes
+                stockPileEl.classList.remove('stock-deck');
+                stockPileEl.classList.add('neumorphic-concave');
+
+                if (state.stock.length > 0) {
+                    // Add the blank card back
+                    const cardBack = createCardElement({ id: 'stock-back', faceUp: false });
+                    cardBack.dataset.pile = 'stock';
+                    stockPileEl.appendChild(cardBack);
+                    // Add 3D deck look
+                    stockPileEl.classList.add('stock-deck'); 
+                    stockPileEl.classList.remove('neumorphic-concave');
+                } else {
+                    // Show reset icon
+                    stockPileEl.innerHTML = `
+                        <button data-pile="stock" class="w-full h-full flex items-center justify-center text-neutral-500">
+                            <i data-lucide="rotate-ccw" class="w-1/2 h-1/2"></i>
+                        </button>
+                    `;
+                    // Re-run createIcons just for this one
+                    lucide.createIcons({
+                        nodes: [stockPileEl.querySelector('i')]
+                    });
+                }
+            }
+
+            function renderWaste() {
+                wastePileEl.innerHTML = '';
+                if (state.waste.length === 0 || state.wasteVisibleCount === 0) return;
+
+                // Show the visible cards from the last draw batch
+                const visibleCards = state.waste.slice(-state.wasteVisibleCount);
+                
+                visibleCards.forEach((card, i) => {
+                    const cardEl = createCardElement(card);
+                    cardEl.style.position = 'absolute'; // Add absolute for stacking
+                    
+                    // Only apply offset if Draw 3 is on
+                    let offset = 0;
+                    if (state.drawCount === 3) {
+                        offset = i * WASTE_STACK_OFFSET;
+                    }
+                    cardEl.style.left = `${offset}px`;
+                    
+                    if (i === visibleCards.length - 1) {
+                        cardEl.dataset.pile = 'waste'; // Only top card is draggable
+                    } else {
+                        cardEl.draggable = false;
+                        cardEl.style.cursor = 'default';
+                    }
+                    wastePileEl.appendChild(cardEl);
+                });
+            }
+
+            function renderFoundations() {
+                foundationEls.forEach((pileEl, index) => {
+                    pileEl.innerHTML = '';
+                    const pile = state.foundations[index];
+                    if (pile.length > 0) {
+                        const topCard = pile[pile.length - 1];
+                        const cardEl = createCardElement(topCard);
+                        cardEl.dataset.pile = 'foundation';
+                        cardEl.dataset.index = index;
+                        pileEl.appendChild(cardEl);
+                    }
+                });
+            }
+
+            function renderTableaus() {
+                tableauEls.forEach((pileEl, index) => {
+                    pileEl.innerHTML = ''; // Clear pile
+                    const pile = state.tableaus[index];
+                    if (pile.length === 0) {
+                        // Add an empty, non-concave placeholder to accept Kings
+                        pileEl.innerHTML = `<div class="card-placeholder" data-pile="tableau" data-index="${index}"></div>`;
+                    } else {
+                        pile.forEach((card, cardIndex) => {
+                            const cardEl = createCardElement(card);
+                            cardEl.style.position = 'absolute'; // Add absolute for stacking
+                            
+                            // Overlap logic: use responsive offset
+                            let topOffset = cardIndex * CARD_STACK_OFFSET;
+                            cardEl.style.top = `${topOffset}px`;
+                            
+                            // Set data attributes for dragging
+                            cardEl.dataset.pile = 'tableau';
+                            cardEl.dataset.index = index;
+                            cardEl.dataset.cardIndex = cardIndex;
+
+                            pileEl.appendChild(cardEl);
+                        });
+                    }
+                });
+            }
+
+            // --- GAME LOGIC ---
+
+            /**
+             * Draws cards from the stock to the waste
+             */
+            function drawFromStock() {
+                saveState(); // Save state before drawing
+                
+                if (state.stock.length > 0) {
+                    // Draw new cards
+                    const count = Math.min(state.drawCount, state.stock.length);
+                    for (let i = 0; i < count; i++) {
+                        const card = state.stock.pop();
+                        card.faceUp = true;
+                        state.waste.push(card);
+                    }
+                    state.wasteVisibleCount = count; // Set new visible count
+                
+                } else if (state.waste.length > 0) {
+                    // Reset stock
+                    state.stock = state.waste.reverse();
+                    state.stock.forEach(card => card.faceUp = false);
+                    state.waste = [];
+                    state.wasteVisibleCount = 0; // Reset visible count
+                }
+                
+                // No updateSizing needed here, tableau heights don't change
+                renderGame();
+            }
+
+            /**
+             * Finds the location of a card in the state
+             */
+            function findCardLocation(cardId) {
+                if (state.waste.length > 0 && state.waste[state.waste.length - 1].id === cardId) {
+                    return { pile: 'waste', card: state.waste[state.waste.length - 1], cardIndex: state.waste.length - 1 };
+                }
+                for (let i = 0; i < state.foundations.length; i++) {
+                    const pile = state.foundations[i];
+                    if (pile.length > 0 && pile[pile.length - 1].id === cardId) {
+                        return { pile: 'foundation', index: i, card: pile[pile.length - 1], cardIndex: pile.length - 1 };
+                    }
+                }
+                for (let i = 0; i < state.tableaus.length; i++) {
+                    const pile = state.tableaus[i];
+                    for (let j = 0; j < pile.length; j++) {
+                        if (pile[j].id === cardId) {
+                            return { pile: 'tableau', index: i, card: pile[j], cardIndex: j };
+                        }
+                    }
+                }
+                return null;
+            }
+
+            /**
+             * Checks if a move is valid
+             */
+            function isValidMove(cardsToMove, targetPileEl) {
+                if (cardsToMove.length === 0) return false;
+
+                const cardToMove = cardsToMove[0];
+                const { pile: targetPile, index: targetIndexStr } = targetPileEl.dataset;
+                const targetIndex = parseInt(targetIndexStr, 10);
+
+                if (targetPile === 'foundation') {
+                    if (cardsToMove.length > 1) return false; // Can only move one card to foundation
+
+                    const pile = state.foundations[targetIndex];
+                    if (pile.length === 0) {
+                        // Must be an Ace
+                        return cardToMove.value === 1;
+                    } else {
+                        // Must be same suit, one value higher
+                        const topCard = pile[pile.length - 1];
+                        return cardToMove.suit === topCard.suit && cardToMove.value === topCard.value + 1;
+                    }
+                }
+
+                if (targetPile === 'tableau') {
+                    const pile = state.tableaus[targetIndex];
+                    if (pile.length === 0) {
+                        // Must be a King
+                        return cardToMove.rank === 'K';
+                    } else {
+                        // Must be opposite color, one value lower
+                        const topCard = pile[pile.length - 1];
+                        if (!topCard.faceUp) return false; // Safety check
+                        return cardToMove.color !== topCard.color && cardToMove.value === topCard.value - 1;
+                    }
+                }
+                
+                return false;
+            }
+
+            /**
+             * Executes a move
+             */
+            function makeMove(cards, targetPileEl) {
+                saveState(); // Save state before moving
+
+                const { pile: sourcePile, index: sourcePileIndex, cardIndex: sourceCardIndex } = state.dragging;
+                const { pile: targetPile, index: targetPileIndexStr } = targetPileEl.dataset;
+                const targetPileIndex = parseInt(targetPileIndexStr, 10);
+                
+                // 1. Remove card(s) from source
+                let source;
+                if (sourcePile === 'waste') {
+                    source = state.waste;
+                    state.wasteVisibleCount--; // Decrement visible count
+                } else if (sourcePile === 'foundation') {
+                    source = state.foundations[sourcePileIndex];
+                } else if (sourcePile === 'tableau') {
+                    source = state.tableaus[sourcePileIndex];
+                }
+                
+                if (!source) return; // Safety check
+                
+                const movedCards = source.splice(sourceCardIndex, cards.length);
+
+                // 2. Add card(s) to target
+                if (targetPile === 'foundation') {
+                    state.foundations[targetPileIndex].push(...movedCards);
+                } else if (targetPile === 'tableau') {
+                    state.tableaus[targetPileIndex].push(...movedCards);
+                }
+
+                // 3. Flip new top card in tableau if needed
+                if (sourcePile === 'tableau' && source.length > 0) {
+                    const newTopCard = source[source.length - 1];
+                    if (newTopCard) newTopCard.faceUp = true;
+                }
+
+                // 4. Re-render and check for win
+                renderGame();
+                checkWin();
+            }
+
+            /**
+             * Checks for win condition
+             */
+            function checkWin() {
+                const win = state.foundations.every(pile => pile.length === 13);
+                if (win) {
+                    winModal.classList.remove('hidden');
+                    state.gameInProgress = false;
+                }
+            }
+            
+            /**
+             * Auto-move card to foundation on double-click
+             */
+            function autoMoveToFoundation(card, sourcePile, sourceCardIndex) {
+                // Check each foundation
+                for (let i = 0; i < state.foundations.length; i++) {
+                    const foundation = state.foundations[i];
+                    if (foundation.length === 0) {
+                        if (card.value === 1) {
+                            // Move Ace to empty foundation
+                            saveState(); // Save state before moving
+                            const [movedCard] = sourcePile.splice(sourceCardIndex, 1);
+                            if (sourcePile === state.waste) state.wasteVisibleCount--; // Decrement if from waste
+                            foundation.push(movedCard);
+                            return true;
+                        }
+                    } else {
+                        const topCard = foundation[foundation.length - 1];
+                        if (card.suit === topCard.suit && card.value === topCard.value + 1) {
+                            // Move card to matching foundation
+                            saveState(); // Save state before moving
+                            const [movedCard] = sourcePile.splice(sourceCardIndex, 1);
+                            if (sourcePile === state.waste) state.wasteVisibleCount--; // Decrement if from waste
+                            foundation.push(movedCard);
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+
+            // --- EVENT HANDLERS ---
+
+            function handleDragStart(e) {
+                const cardEl = e.target.closest('.card');
+                if (!cardEl || !state.gameInProgress) {
+                    e.preventDefault();
+                    return;
+                }
+
+                const { pile, index, cardIndex } = cardEl.dataset;
+                
+                let cardsToDrag = [];
+                let sourceCard;
+                let pIndex = parseInt(index, 10);
+                let pCardIndex = parseInt(cardIndex, 10);
+
+                if (pile === 'waste') {
+                    if (state.waste.length === 0) return;
+                    pCardIndex = state.waste.length - 1; // Always drag the last card in waste
+                    sourceCard = state.waste[pCardIndex];
+                    if (sourceCard.id !== cardEl.dataset.cardId) return; // Not the top card
+                    cardsToDrag = [sourceCard];
+                    state.dragging = { cards: cardsToDrag, pile: 'waste', index: null, cardIndex: pCardIndex };
+                
+                } else if (pile === 'foundation') {
+                    if (isNaN(pIndex) || isNaN(pCardIndex)) return;
+                    sourceCard = state.foundations[pIndex][pCardIndex];
+                    if (!sourceCard) return;
+                    cardsToDrag = [sourceCard];
+                    state.dragging = { cards: cardsToDrag, pile: 'foundation', index: pIndex, cardIndex: pCardIndex };
+                
+                } else if (pile === 'tableau') {
+                    if (isNaN(pIndex) || isNaN(pCardIndex)) return;
+                    const tableau = state.tableaus[pIndex];
+                    sourceCard = tableau[pCardIndex];
+                    if (!sourceCard || !sourceCard.faceUp) {
+                        e.preventDefault();
+                        return;
+                    }
+                    cardsToDrag = tableau.slice(pCardIndex);
+                    state.dragging = { cards: cardsToDrag, pile: 'tableau', index: pIndex, cardIndex: pCardIndex };
+                }
+
+                if (cardsToDrag.length === 0) {
+                    e.preventDefault();
+                    return;
+                }
+
+                // Custom drag image
+                customDragImageEl.innerHTML = '';
+                cardsToDrag.forEach(c => {
+                    const dragCard = createCardElement(c);
+                    customDragImageEl.appendChild(dragCard);
+                });
+                
+                e.dataTransfer.setDragImage(customDragImageEl, 20, 20);
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', cardsToDrag[0].id);
+
+                setTimeout(() => {
+                    cardsToDrag.forEach(c => {
+                        const el = document.querySelector(`[data-card-id="${c.id}"]`);
+                        if(el) el.classList.add('is-dragging');
+                    });
+                }, 0);
+            }
+
+            function handleDragOver(e) {
+                e.preventDefault(); // Allow drop
+            }
+
+            function handleDrop(e) {
+                e.preventDefault();
+                const targetEl = e.target.closest('[data-pile]');
+                
+                if (!targetEl || !state.dragging.cards.length) {
+                    clearDragging();
+                    return;
+                }
+                
+                if (isValidMove(state.dragging.cards, targetEl)) {
+                    makeMove(state.dragging.cards, targetEl);
+                }
+
+                clearDragging();
+            }
+
+            function handleDragEnd(e) {
+                clearDragging();
+            }
+            
+            function clearDragging() {
+                document.querySelectorAll('.is-dragging').forEach(el => el.classList.remove('is-dragging'));
+                state.dragging = { cards: [], pile: null, index: null, cardIndex: null };
+                customDragImageEl.innerHTML = '';
+            }
+
+            function handleClick(e) {
+                if (!state.gameInProgress) return;
+                const target = e.target.closest('[data-pile]');
+                if (!target) return;
+
+                if (target.dataset.pile === 'stock') {
+                    drawFromStock();
+                }
+            }
+            
+            function handleDoubleClick(e) {
+                if (!state.gameInProgress) return;
+                const cardEl = e.target.closest('.card');
+                if (!cardEl) return;
+
+                const { pile, index, cardIndex } = cardEl.dataset;
+                
+                let sourcePile, card, pIndex, pCardIndex;
+
+                if (pile === 'waste') {
+                    if (state.waste.length === 0) return;
+                    pCardIndex = state.waste.length - 1;
+                    sourcePile = state.waste;
+                    card = sourcePile[pCardIndex];
+                    if (card.id !== cardEl.dataset.cardId) return; // Not top card
+                
+                } else if (pile === 'tableau') {
+                    pIndex = parseInt(index, 10);
+                    pCardIndex = parseInt(cardIndex, 10);
+                    if (isNaN(pIndex) || isNaN(pCardIndex)) return;
+                    
+                    sourcePile = state.tableaus[pIndex];
+                    if (sourcePile.length === 0) return;
+
+                    // Ensure it's the top card of the tableau stack
+                    if (pCardIndex !== sourcePile.length - 1) return; 
+                    
+                    card = sourcePile[pCardIndex];
+                
+                } else {
+                    return; // Can't dblclick from foundations or stock
+                }
+
+                if (!card) return;
+
+                const moved = autoMoveToFoundation(card, sourcePile, pCardIndex);
+                
+                if (moved) {
+                    // Flip new top card if from tableau
+                    if (pile === 'tableau' && sourcePile.length > 0) {
+                        sourcePile[sourcePile.length - 1].faceUp = true;
+                    }
+                    // No resize needed, just render
+                    renderGame();
+                    checkWin();
+                }
+            }
+            
+            // --- SETTINGS ---
+            function toggleSettings() {
+                settingsModal.classList.toggle('hidden');
+            }
+            
+            function updateDrawSetting(count) {
+                state.drawCount = count;
+                // Force a re-render of waste if setting changes
+                if (count === 1) {
+                    state.wasteVisibleCount = state.waste.length > 0 ? 1 : 0;
+                    // Draw 1 selected
+                    draw1Btn.classList.add('neumorphic-convex');
+                    draw1Btn.classList.remove('neumorphic-concave', 'opacity-60');
+                    // Draw 3 unselected
+                    draw3Btn.classList.add('neumorphic-convex', 'opacity-60'); // Now convex
+                    draw3Btn.classList.remove('neumorphic-concave'); // Remove concave
+                } else {
+                    // Find the start of the current batch
+                    const batchStart = Math.max(0, state.waste.length - state.wasteVisibleCount);
+                    // Get all cards from the start of the batch to the end
+                    const currentBatch = state.waste.slice(batchStart);
+                    // The new visible count is the lower of 3 or the batch size
+                    state.wasteVisibleCount = Math.min(3, currentBatch.length);
+                    
+                    // Draw 3 selected
+                    draw3Btn.classList.add('neumorphic-convex');
+                    draw3Btn.classList.remove('neumorphic-concave', 'opacity-60');
+                    // Draw 1 unselected
+                    draw1Btn.classList.add('neumorphic-convex', 'opacity-60'); // Now convex
+                    draw1Btn.classList.remove('neumorphic-concave'); // Remove concave
+                }
+                renderWaste();
+            }
+
+            // --- INITIALIZATION ---
+            
+            // Add global event listeners
+            gameBoard.addEventListener('dragstart', handleDragStart);
+            gameBoard.addEventListener('dragover', handleDragOver);
+            gameBoard.addEventListener('drop', handleDrop);
+            gameBoard.addEventListener('dragend', handleDragEnd);
+            gameBoard.addEventListener('click', handleClick);
+            gameBoard.addEventListener('dblclick', handleDoubleClick);
+
+            // Settings buttons
+            hamburgerBtn.addEventListener('click', toggleSettings);
+            settingsCloseBtn.addEventListener('click', toggleSettings);
+            draw1Btn.addEventListener('click', () => updateDrawSetting(1));
+            draw3Btn.addEventListener('click', () => updateDrawSetting(3));
+            
+            // New game / Undo buttons
+            undoBtn.addEventListener('click', undoMove);
+            modalNewGameBtn.addEventListener('click', newGame);
+            winNewGameBtn.addEventListener('click', newGame);
+            
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                updateSizing();
+                renderGame();
+            });
+            
+            // Create icons ONCE
+            lucide.createIcons();
+
+            // Start
+            updateDrawSetting(state.drawCount);
+            newGame(); // This calls updateSizing and renderGame
+        });
+    </script>
+</body>
+</html>
